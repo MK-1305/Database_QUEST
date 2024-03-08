@@ -1,0 +1,320 @@
+# DB&SQLの提出クエスト
+
+## ステップ2
+
+1. データベースを構築します
+
+```sql
+;mysqlにログイン
+mysql -u ユーザー名 -p
+
+;データベースを作成
+CREATE DATABASE internet_tv
+
+;データベースの指定
+USE internet_tv
+```
+
+2. ステップ1で設計したテーブルを構築します
+```sql
+;channelsテーブル
+CREATE TABLE channels (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) UNIQUE NOT NULL
+);
+
+;genresテーブル
+CREATE TABLE genres (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) UNIQUE NOT NULL
+);
+
+;programsテーブル
+CREATE TABLE programs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    detail TEXT,
+    genre_id INT NOT NULL,
+    channel_id INT NOT NULL,
+    FOREIGN KEY (genre_id) REFERENCES genres(id),
+    FOREIGN KEY (channel_id) REFERENCES channels(id);
+    INDEX idx_genre_id (genre_id)
+);
+
+;seasonsテーブル
+CREATE TABLE seasons (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    program_id INT NOT NULL,
+    season_number INT NOT NULL,
+    FOREIGN KEY (program_id) REFERENCES programs(id),
+    UNIQUE (program_id, season_number),
+    INDEX idx_program_id (program_id)
+);
+
+;episodesテーブル 
+CREATE TABLE episodes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    season_id INT NOT NULL,
+    episode_number INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    detail TEXT,
+    duration INT NOT NULL,
+    release_date DATE NOT NULL,
+    views INT DEFAULT 0 NOT NULL,
+    FOREIGN KEY (season_id) REFERENCES seasons(id),
+    INDEX idx_season_id (season_id)
+);
+
+;program_schedulesテーブル
+CREATE TABLE program_schedules (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    channel_id INT NOT NULL,
+    episode_id INT NOT NULL,
+    start_time DATETIME NOT NULL,
+    end_time DATETIME NOT NULL,
+    FOREIGN KEY (channel_id) REFERENCES channels(id),
+    FOREIGN KEY (episode_id) REFERENCES episodes(id),
+    INDEX idx_channel_id (channel_id),
+    INDEX idx_episode_id (episode_id)
+);
+```
+
+3. サンプルデータを入れます。サンプルデータはご自身で作成ください（ChatGPTを利用すると比較的簡単に生成できます）
+``` sql
+-- チャンネルテーブル
+INSERT INTO channels (name) VALUES
+    ('NHK総合'),
+    ('ドラマ'),
+    ('フジテレビ'),
+    ('TBSテレビ'),
+    ('テレビ朝日'),
+    ('テレビ東京'),
+    ('WOWOW'),
+    ('スターチャンネル');
+
+-- ジャンルテーブル
+INSERT INTO genres (name) VALUES
+    ('ドラマ'),
+    ('コメディ'),
+    ('バラエティ'),
+    ('ニュース'),
+    ('アニメ'),
+    ('ドキュメンタリー'),
+    ('映画');
+
+-- 番組テーブル
+INSERT INTO programs (title, detail, genre_id, channel_id) VALUES
+    ('半沢直樹', '東京中央銀行の融資課長を中心としたドラマ', 1, 2),
+    ('ドクターX', '大門未知子を主人公とする医療ドラマ', 1, 2),
+    ('月曜から夜ふかし', '加藤浩次を中心としたトーク番組', 3, 3),
+    ('ガキの使いやあらへんで', 'Downtown出演の長寿お笑い番組', 2, 4),
+    ('櫻井・有吉THE夜会', 'お笑い芸人による深夜のトーク番組', 3, 5),
+    ('NHKニュース', 'NHKの報道番組', 4, 1),
+    ('サザエさん', '長寿アニメ作品', 5, 6),
+    ('ワンピース', '人気アニメ作品', 5, 6),
+    ('世界の車窓から', '各国の風景を紹介するドキュメンタリー', 6, 8),
+    ('アベンジャーズ', 'マーベル映画', 7, 7);
+
+-- シーズンテーブル
+INSERT INTO seasons (program_id, season_number) VALUES
+    (1, 1),
+    (1, 2),
+    (2, 1),
+    (2, 2),
+    (3, 1),
+    (4, 1),
+    (5, 1),
+    (6, 0),
+    (7, 1),
+    (8, 1),
+    (9, 1),
+    (10, 0);
+
+-- エピソードテーブル
+INSERT INTO episodes (season_id, episode_number, title, detail, duration, release_date, views) VALUES
+    (1, 1, '巨大な陰謀', '東京中央銀行の不正融資事件の渦中に巻き込まれる', 60, '2023-01-05', 5000000),
+    (1, 2, '日暮里舎密着', '日暮里支店の不正融資問題に立ち向かう', 60, '2023-01-12', 4800000),
+    (1, 3, '東京中央銀行の過去', '半沢の過去と銀行の歴史が明らかになる', 60, '2023-01-19', 5200000),
+    (2, 1, '再び巨大な陰謀が', '半沢直樹シーズン2の幕開け', 60, '2024-01-05', 6000000),
+    (2, 2, '新たな敵', '半沢直樹シーズン2の新たな敵が登場', 60, '2024-01-12', 5800000),
+    (3, 1, '白い巨塔', '大門未知子が新しい職場で難題に直面する', 60, '2022-10-05', 6000000),
+    (4, 1, '赤い血潮', '未知子が難病の少女の手術を執刀する', 60, '2022-10-12', 5800000),
+    (5, 1, '2023年2月13日放送分', '芸能人ゲストを迎えてのトーク番組', 120, '2023-02-13', 1500000),
+    (6, 1, '絶対に笑ってはいけない病院24時', 'ダウンタウンが病院の中で大ゲラを果たすか', 120, '2023-01-01', 4000000),
+    (7, 1, '2023年3月4日放送分', '有吉弘行と櫻井翔が本音でトークする深夜番組', 90, '2023-03-04', 800000),
+    (8, 1, 'NHKニュース', '陶芸の巨匠は日々どんなことを考えているのか', 90, '2023-03-04', 800000),
+    (9, 1, 'エビフライしれとこ', 'サザエさん一家でエビフライを作る回', 30, '2023-02-05', 3500000),
+    (10, 1, 'ウソップVSコビー', 'ウソップとコビー海賊団の対決が描かれる', 30, '2023-03-05', 2000000),
+    (11, 1, 'シンガポールの車窓から', 'シンガポールの街並みや文化が紹介される', 60, '2023-02-01', 300000),
+    (12, 1, 'アベンジャーズ/エンドゲーム', 'アベンジャーズ最新作', 180, '2023-04-01', 1200000);
+    (1, 4, '大阪西支店の抵抗', '大阪西支店の不正融資問題に立ち向かう半沢', 60, '2023-01-26', 5100000),
+    (1, 5, '半沢の決断', '不正融資問題解決に向けて半沢が下す決断とは', 60, '2023-02-02', 5300000),
+    (1, 6, '大和田常務の野望', '大和田常務の不正融資問題への関与が明らかに', 60, '2023-02-09', 5200000),
+    (1, 7, '最終決戦', '半沢と大和田常務の対決が決着', 60, '2023-02-16', 5500000),
+    (2, 3, '伊勢崎の逆襲', '伊勢崎が半沢に復讐を誓う', 60, '2024-01-19', 5900000),
+    (2, 4, '新たな陰謀', '半沢に立ちはだかる新たな陰謀とは', 60, '2024-01-26', 6100000),
+    (2, 5, '凍結された口座', '東京中央銀行の顧客口座が凍結される事件が発生', 60, '2024-02-02', 6000000),
+    (2, 6, '真相解明', '口座凍結事件の真相に半沢が迫る', 60, '2024-02-09', 6200000),
+    (2, 7, '最後の戦い', 'シーズン2の最終回。半沢が事件の黒幕に挑む', 60, '2024-02-16', 6400000),
+    (3, 2, '天才外科医の試練', '未知子が難しい手術に挑戦する', 60, '2022-10-12', 5900000),
+    (3, 3, '医療事故の真相', '未知子が医療事故の真相を追う', 60, '2022-10-19', 6100000),
+    (3, 4, '対立する同僚', '未知子と同僚の外科医が対立する', 60, '2022-10-26', 6000000),
+    (3, 5, '手術成功', '未知子が難易度の高い手術を成功させる', 60, '2022-11-02', 6200000),
+    (4, 2, '危機的状況', '未知子が患者の命を救うため奮闘する', 60, '2022-10-19', 5900000),
+    (4, 3, '新たな治療法', '未知子が新たな治療法に挑戦する', 60, '2022-10-26', 6000000),
+    (4, 4, '医療裁判', '未知子が医療裁判に巻き込まれる', 60, '2022-11-02', 6100000),
+    (4, 5, '救命', '未知子が瀕死の患者の命を救う', 60, '2022-11-09', 6200000),
+    (5, 2, '2023年2月20日放送分', '人気俳優がゲストで登場', 120, '2023-02-20', 1600000),
+    (5, 3, '2023年2月27日放送分', '話題のアイドルがゲストで登場', 120, '2023-02-27', 1700000),
+    (5, 4, '2023年3月6日放送分', '人気お笑い芸人がゲストで登場', 120, '2023-03-06', 1800000),
+    (6, 2, '絶対に笑ってはいけない温泉旅館', 'ロケバスで温泉旅館に向かう6人', 120, '2023-01-08', 4100000),
+    (6, 3, '絶対に笑ってはいけないキャンプ', 'ダウンタウンら6人がキャンプに挑戦', 120, '2023-01-15', 4200000),
+    (6, 4, '絶対に笑ってはいけない修学旅行', '6人が体験する笑えない修学旅行', 120, '2023-01-22', 4300000),
+    (7, 2, '2023年3月11日放送分', 'ゲストとのトークが盛り上がる', 90, '2023-03-11', 850000),
+    (7, 3, '2023年3月18日放送分', '有吉弘行が爆笑エピソードを披露', 90, '2023-03-18', 900000),
+    (7, 4, '2023年3月25日放送分', 'ゲストとのコラボ企画が話題に', 90, '2023-03-25', 950000),
+    (8, 2, 'NHKニュース', '今日の主要ニュースを詳しく解説', 90, '2023-03-05', 820000),
+    (8, 3, 'NHKニュース', '国内外の最新ニュースをお届け', 90, '2023-03-06', 840000),
+    (8, 4, 'NHKニュース', '注目の経済ニュースを分かりやすく解説', 90, '2023-03-07', 860000),
+    (9, 2, 'タラヲはカツオの夢を見る', 'タラヲがカツオの夢を見て騒動に', 30, '2023-02-12', 3600000),
+    (9, 3, 'ワカメ、大人になる', 'ワカメが初めてのお小遣いで悩む', 30, '2023-02-19', 3700000),
+    (9, 4, 'マスオ、社長になる', 'マスオが会社の社長に就任するが…', 30, '2023-02-26', 3800000),
+    (10, 2, 'ルフィ、海賊王に俺はなる！', 'ルフィが海賊王を目指して出発する', 30, '2023-03-12', 2100000),
+    (10, 3, 'ゾロの過去', 'ゾロの過去が明らかになる', 30, '2023-03-19', 2200000),
+    (10, 4, 'ナミ、海図を盗む', 'ナミが海図を盗んで一行に加わる', 30, '2023-03-26', 2300000),
+    (11, 2, 'マレーシアの車窓から', 'マレーシアの大自然と都市の風景', 60, '2023-02-08', 320000),
+    (11, 3, 'タイの車窓から', 'タイの寺院や市場の風景を楽しむ', 60, '2023-02-15', 340000),
+    (11, 4, 'ベトナムの車窓から', 'ベトナムの田園風景と活気ある都市を旅する', 60, '2023-02-22', 360000),
+    (12, 2, 'アベンジャーズ/インフィニティ・ウォー', 'サノスとの戦いが始まる', 160, '2023-04-08', 1300000),
+    (12, 3, 'キャプテン・マーベル', 'ニック・フューリーが新ヒーローを発見する', 150, '2023-04-15', 1100000),
+    (12, 4, 'スパイダーマン/ファー・フロム・ホーム', 'ピーター・パーカーがヨーロッパ旅行に出かける', 140, '2023-04-22', 1400000),
+    (1, 8, '半沢の新たな戦い', '昇進した半沢が新たな不正に立ち向かう', 60, '2023-02-23', 5400000),
+    (1, 9, '大阪西支店の真実', '大阪西支店の不正融資問題の全容が明らかに', 60, '2023-03-02', 5600000),
+    (1, 10, 'シーズン1の結末', '半沢がシーズン1の戦いに決着をつける', 60, '2023-03-09', 5800000),
+    (2, 8, '新たな敵の正体', '半沢に立ちはだかる新たな敵の正体が判明', 60, '2024-02-23', 6300000),
+    (2, 9, '決死の潜入', '半沢が敵のアジトに潜入する', 60, '2024-03-01', 6500000),
+    (2, 10, 'シーズン2の結末', 'シーズン2の戦いに決着がつく', 60, '2024-03-08', 6700000),
+    (3, 6, '未知子の決断', '未知子が患者の治療方針を巡って決断を迫られる', 60, '2022-11-09', 6300000),
+    (3, 7, '医療チームの危機', '未知子の医療チームが危機に陥る', 60, '2022-11-16', 6400000),
+    (3, 8, 'シーズン1の結末', '未知子がシーズン1の難題を乗り越える', 60, '2022-11-23', 6500000),
+    (4, 6, '手術の成否', '未知子が難しい手術に挑む', 60, '2022-11-16', 6300000),
+    (4, 7, '医療界の陰謀', '未知子が医療界の陰謀に巻き込まれる', 60, '2022-11-23', 6400000),
+    (4, 8, 'シーズン2の結末', 'シーズン2の事件に決着がつく', 60, '2022-11-30', 6500000);
+
+-- program_schedulesテーブル
+-- 一時テーブルを作成
+CREATE TEMPORARY TABLE temp_datetime_range (
+    start_time DATETIME
+);
+
+-- 再帰的なCTEで日時を生成し、一時テーブルに挿入
+INSERT INTO temp_datetime_range (start_time)
+WITH RECURSIVE datetime_range AS (
+    SELECT '2024-03-01 00:00:00' AS start_time
+    UNION ALL
+    SELECT DATE_ADD(start_time, INTERVAL 30 MINUTE)
+    FROM datetime_range
+WHERE start_time < '2024-03-22 00:00:00'
+)
+SELECT start_time FROM datetime_range;
+
+-- 一時テーブルを使ってprogram_schedulesにデータを挿入
+INSERT INTO program_schedules (channel_id, episode_id, start_time, end_time)
+SELECT
+    p.channel_id,
+    episode.id AS episode_id,
+    temp_datetime_range.start_time,
+    DATE_ADD(temp_datetime_range.start_time, INTERVAL duration MINUTE) AS end_time
+FROM
+    temp_datetime_range
+    JOIN (
+        SELECT * FROM episodes ORDER BY RAND()
+    ) AS episode
+    JOIN programs p ON episode.season_id = p.id
+    ON MOD(TIMESTAMPDIFF(MINUTE, '2024-03-01 00:00:00', temp_datetime_range.start_time), (SELECT COUNT(*) FROM episodes)) = episode.id - 1;
+
+-- 一時テーブルを削除
+DROP TEMPORARY TABLE temp_datetime_range;
+
+; 再帰的なクエリの制限が発生したら（元々1000だった）
+SHOW VARIABLES LIKE 'cte_max_recursion_depth';
+SET @@cte_max_recursion_depth = 2000;
+-- 上記は一時的、以下は環境変数を変えるのでそのまま
+SET GLOBAL cte_max_recursion_depth = 2000;
+```
+
+## ステップ3
+
+1. よく見られているエピソードを知りたいです。エピソード視聴数トップ3のエピソードタイトルと視聴数を取得してください
+```sql
+SELECT title, views
+FROM episodes
+ORDER BY views DESC
+LIMIT 3;
+```
+2. よく見られているエピソードの番組情報やシーズン情報も合わせて知りたいです。エピソード視聴数トップ3の番組タイトル、シーズン数、エピソード数、エピソードタイトル、視聴数を取得してください
+```sql
+SELECT p.title AS program_title, s.season_number, e.episode_number, e.title AS episode_title, e.views
+FROM episodes e
+JOIN seasons s on e.season_id = s.id
+JOIN programs p on s.program_id = p.id
+ORDER BY e.views DESC
+LIMIT 3;
+```
+3. 本日の番組表を表示するために、本日、どのチャンネルの、何時から、何の番組が放送されるのかを知りたいです。本日放送される全ての番組に対して、チャンネル名、放送開始時刻(日付+時間)、放送終了時刻、シーズン数、エピソード数、エピソードタイトル、エピソード詳細を取得してください。なお、番組の開始時刻が本日のものを本日方法される番組とみなすものとします
+```sql
+SELECT c.name, ps.start_time, ps.end_time, s.season_number, e.episode_number, e.title, e.detail
+FROM program_schedules ps
+JOIN channels c on ps.channel_id = c.id
+JOIN episodes e on ps.episode_id = e.id
+JOIN seasons s on e.season_id = s.id
+-- 開始時刻が今日の日付だったら
+WHERE DATE (ps.start_time) = CURDATE()
+ORDER BY ps.start_time;
+```
+4. ドラマというチャンネルがあったとして、ドラマのチャンネルの番組表を表示するために、本日から一週間分、何日の何時から何の番組が放送されるのかを知りたいです。ドラマのチャンネルに対して、放送開始時刻、放送終了時刻、シーズン数、エピソード数、エピソードタイトル、エピソード詳細を本日から一週間分取得してください
+```sql
+SELECT ps.start_time, ps.end_time, s.season_number, e.episode_number, e.title, e.detail
+FROM program_schedules ps
+JOIN episodes e on ps.episode_id = e.id  
+JOIN seasons s on e.season_id = s.id
+JOIN programs p on s.program_id = s.id
+WHERE p.channel_id = (SELECT id FROM channels c WHERE c.name = 'ドラマ')
+AND ps.start_time BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 1 WEEK)
+ORDER BY ps.start_time;
+```
+5. (advanced) 直近一週間で最も見られた番組が知りたいです。直近一週間に放送された番組の中で、エピソード視聴数合計トップ2の番組に対して、番組タイトル、視聴数を取得してください
+```sql
+SELECT p.title, SUM(e.views) AS sum_views
+FROM program_schedules ps
+JOIN episodes e on ps.episode_id = e.id
+JOIN seasons s on e.season_id = s.id
+JOIN programs p on s.program_id = p.id
+WHERE ps.start_time BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 WEEK) AND CURDATE()
+GROUP BY p.title
+ORDER BY sum_views DESC
+LIMIT 2;
+```
+6. (advanced) ジャンルごとの番組の視聴数ランキングを知りたいです。番組の視聴数ランキングはエピソードの平均視聴数ランキングとします。ジャンルごとに視聴数トップの番組に対して、ジャンル名、番組タイトル、エピソード平均視聴数を取得してください。
+```sql
+-- １つしか取れない
+SELECT g.name, p.title, AVG(e.views) AS average_views
+FROM episodes e
+JOIN seasons s on e.season_id = s.id
+JOIN programs p on s.program_id = p.id
+JOIN genres g on p.genre_id = g.id 
+GROUP BY g.name, p.title
+-- 平均視聴数がMAXのものを取得したい
+HAVING AVG(e.views) = (
+    SELECT MAX(average_views)
+	FROM (
+	SELECT AVG(e.views) AS average_views
+	FROM episodes e
+	JOIN seasons s on e.season_id = s.id
+	JOIN programs p on s.program_id = p.id
+	JOIN genres g on p.genre_id = g.id 
+	GROUP BY g.name, p.title
+	) subquery_having
+)
+ORDER BY g.name;
+```
